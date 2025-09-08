@@ -5,10 +5,7 @@ const { endpointUrl, n8nWebhookUrl } = require('../config/environment');
 class DecryptController {
   async fetchDecryptAndSend(req, res, next) {
     try {
-      if (!endpointUrl) throw new Error('ENDPOINT_URL não configurada');
-      if (!n8nWebhookUrl) throw new Error('N8N_WEBHOOK_URL não configurada');
-
-      // 1) Buscar
+      // 1) Buscar do endpoint
       const encryptedData = await apiService.getEncryptedData(endpointUrl);
       const encObj = encryptedData?.data?.encrypted;
       if (!encObj) throw new Error('Payload criptografado não encontrado');
@@ -16,7 +13,8 @@ class DecryptController {
       // 2) Descriptografar
       const plainText = encryptionService.decryptAES256GCM(encObj);
       const parsedData = encryptionService.parseDecryptedData(plainText);
-
+      console.log("🔓 Dados descriptografados (antes do envio):");
+    console.dir(parsedData, { depth: null });  // 👈 mostra os dados inteiros no terminal
       console.log(`🔓 ${Array.isArray(parsedData) ? parsedData.length : 1} registros descriptografados`);
 
       // 3) Enviar ao N8N
