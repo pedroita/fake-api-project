@@ -7,7 +7,7 @@ const app = express();
 
 // 🔹 Configuração de CORS para aceitar apenas seu frontend
 const allowedOrigins = [
-  'https://n8n-table-app-git-master-pedroitas-projects.vercel.app'
+  'https://n8n-table-app.vercel.app'
 ];
 
 app.use(cors({
