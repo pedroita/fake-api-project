@@ -1,27 +1,8 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const decryptRoutes = require('./routes/decryptRoute');
 
 const app = express();
-
-// 🔹 Configuração de CORS para aceitar apenas seu frontend
-const allowedOrigins = [
-  'https://n8n-table-app.vercel.app'
-];
-
-app.use(cors({
-  origin: function(origin, callback){
-    if(!origin) return callback(null, true); // permite Postman ou curl
-    if(allowedOrigins.indexOf(origin) === -1){
-      return callback(new Error('CORS não permitido para este origin'), false);
-    }
-    return callback(null, true);
-  },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','Pragma','Expires','Cache-Control'],
-  credentials: true
-}));
 
 // Middlewares para body parsing
 app.use(express.json({ limit: '10mb' }));
