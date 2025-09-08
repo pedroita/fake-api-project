@@ -1,0 +1,32 @@
+{
+  "name": "aes-decryptor-service",
+  "version": "1.0.0",
+  "description": "Service to decrypt AES-256-GCM encrypted data and forward to webhook",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest",
+    "docs": "swagger-jsdoc -o docs/swagger.yaml src/**/*.js"
+  },
+  "dependencies": {
+    "axios": "^1.11.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10"
+  },
+  "keywords": [
+    "aes",
+    "decrypt",
+    "webhook",
+    "api"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
