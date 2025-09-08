@@ -5,38 +5,39 @@ const { endpointUrl, n8nWebhookUrl } = require('../config/environment');
 class DecryptController {
   async fetchDecryptAndSend(req, res, next) {
     try {
+      if (!endpointUrl) throw new Error('ENDPOINT_URL não configurada');
+      if (!n8nWebhookUrl) throw new Error('N8N_WEBHOOK_URL não configurada');
+
+      // 1) Buscar
       const encryptedData = await apiService.getEncryptedData(endpointUrl);
       const encObj = encryptedData?.data?.encrypted;
-      
-      if (!encObj) {
-        throw new Error('Payload criptografado não encontrado na resposta');
-      }
+      if (!encObj) throw new Error('Payload criptografado não encontrado');
 
+      // 2) Descriptografar
       const plainText = encryptionService.decryptAES256GCM(encObj);
       const parsedData = encryptionService.parseDecryptedData(plainText);
 
-      console.log(`🔓 Dados descriptografados, enviando ${Array.isArray(parsedData) ? parsedData.length : 1} registros...`);
+      console.log(`🔓 ${Array.isArray(parsedData) ? parsedData.length : 1} registros descriptografados`);
 
+      // 3) Enviar ao N8N
       const n8nResponse = await apiService.sendToWebhook(n8nWebhookUrl, parsedData);
-      console.log("✅ Dados enviados com sucesso");
+      console.log("✅ Enviado ao N8N");
 
       res.json({
         status: 'success',
-        message: 'Dados descriptografados e enviados com sucesso',
-        recordsSent: Array.isArray(parsedData) ? parsedData.length : 1,
-        n8nResponse: n8nResponse
+        records: Array.isArray(parsedData) ? parsedData.length : 1,
+        n8nResponse
       });
-
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(err);
     }
   }
 
   healthCheck(req, res) {
-    res.json({ 
-      status: 'healthy', 
-      timestamp: new Date().toISOString(),
-      service: 'AES Decryptor Service'
+    res.json({
+      status: 'healthy',
+      service: 'AES Decryptor',
+      timestamp: new Date().toISOString()
     });
   }
 }

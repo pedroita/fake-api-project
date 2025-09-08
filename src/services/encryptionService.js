@@ -1,38 +1,29 @@
 const crypto = require('crypto');
-const { getKeyFromEnv } = require('../config/environment');
+const { aesKey } = require('../config/environment');
 
-class EncryptionService {
-  constructor() {
-    this.key = getKeyFromEnv();
-  }
+function getKey() {
+  if (!aesKey) throw new Error('AES_KEY não configurada no .env');
+  if (/^[0-9a-fA-F]{64}$/.test(aesKey)) return Buffer.from(aesKey, 'hex');
+  return Buffer.from(aesKey, 'base64');
+}
 
-  decryptAES256GCM(encryptedObj) {
-    try {
-      const iv = Buffer.from(encryptedObj.iv, 'hex');
-      const authTag = Buffer.from(encryptedObj.authTag, 'hex');
-      const cipherText = Buffer.from(encryptedObj.encrypted, 'hex');
+function decryptAES256GCM(encryptedObj) {
+  const key = getKey();
+  const iv = Buffer.from(encryptedObj.iv, 'hex');
+  const authTag = Buffer.from(encryptedObj.authTag, 'hex');
+  const cipherText = Buffer.from(encryptedObj.encrypted, 'hex');
 
-      const decipher = crypto.createDecipheriv('aes-256-gcm', this.key, iv);
-      decipher.setAuthTag(authTag);
-      
-      const decrypted = Buffer.concat([
-        decipher.update(cipherText), 
-        decipher.final()
-      ]);
-      
-      return decrypted.toString('utf8');
-    } catch (error) {
-      throw new Error(`Falha na descriptografia: ${error.message}`);
-    }
-  }
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(authTag);
+  return Buffer.concat([decipher.update(cipherText), decipher.final()]).toString('utf8');
+}
 
-  parseDecryptedData(plainText) {
-    try {
-      return JSON.parse(plainText);
-    } catch {
-      return plainText;
-    }
+function parseDecryptedData(plain) {
+  try {
+    return JSON.parse(plain);
+  } catch {
+    return plain;
   }
 }
 
-module.exports = new EncryptionService();
+module.exports = { decryptAES256GCM, parseDecryptedData };

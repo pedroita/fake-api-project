@@ -1,72 +1,38 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+const decryptRoutes = require('./routes/decryptRoute');
 
-const { validateEnvironment, port } = require('./config/environment');
-const decryptRoutes = require('./routes/decryptRoutes');
-const errorHandler = require('./middlewares/errorHandler');
+const app = express();
 
-class App {
-  constructor() {
-    this.app = express();
-    this.port = port;
-    
-    this.initializeMiddlewares();
-    this.initializeRoutes();
-    this.initializeErrorHandling();
-    this.initializeSwagger();
-  }
+// Middlewares
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-  initializeMiddlewares() {
-    this.app.use(cors());
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
-  }
+// Routes
+app.use('/api', decryptRoutes);
 
-  initializeRoutes() {
-    this.app.use('/api', decryptRoutes);
-  }
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
 
-  initializeErrorHandling() {
-    this.app.use(errorHandler);
-  }
+// Error handling middleware
+app.use((error, req, res, next) => {
+  console.error('Erro não tratado:', error);
+  res.status(500).json({ 
+    status: 'error', 
+    message: 'Erro interno do servidor' 
+  });
+});
 
-  initializeSwagger() {
-    const options = {
-      definition: {
-        openapi: '3.0.0',
-        info: {
-          title: 'AES Decryptor Service API',
-          version: '1.0.0',
-          description: 'API para descriptografar dados AES-256-GCM e enviar para webhook',
-        },
-        servers: [
-          {
-            url: `http://localhost:${this.port}`,
-            description: 'Development server',
-          },
-        ],
-      },
-      apis: ['./src/routes/*.js'],
-    };
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ 
+    status: 'error', 
+    message: 'Endpoint não encontrado' 
+  });
+});
 
-    const specs = swaggerJsdoc(options);
-    this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-  }
-
-  start() {
-    validateEnvironment();
-    
-    this.app.listen(this.port, () => {
-      console.log(`✅ Server rodando na porta ${this.port}`);
-      console.log(`📚 Documentação disponível em: http://localhost:${this.port}/api-docs`);
-    });
-  }
-}
-
-const server = new App();
-server.start();
-
-module.exports = server;
+module.exports = app;
